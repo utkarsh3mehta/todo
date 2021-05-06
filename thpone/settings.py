@@ -123,10 +123,3 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/attachments/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'attachments')
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_HOST_USER = 'azure_07529351f6a95e8b11b8f471c054f991@azure.com'
-EMAIL_HOST_PASSWORD = '@ppl!c@t!on$endGr!dC43dent!als'
-EMAIL_PORT = 587
