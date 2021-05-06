@@ -28,6 +28,10 @@ Do excuse the application if you see "Handover" here and there.
 
 ## Steps to start the project on your local machine
 
+### Prerequisites
+
+Python should be installed on your local machine
+
 ### Use `py/python` according to your operating system. `py` for windows, `python` for Linux/Unix
 
 1. `py manage.py migrate`
