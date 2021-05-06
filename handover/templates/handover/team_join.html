@@ -1,0 +1,73 @@
+{% extends 'handover/layout.html' %}
+
+{% block body %}
+{% if error_message %}
+    {{ error_message }}
+{% else %}
+<h1 class="display-2 text-center"><abbr title="Just some three random alphabets">I.L.D.</abbr></h1>
+<h1 class="display-4 text-center">Join Team</h1>
+<div class="container-fluid" style="max-width: 450px;">
+    <div class="card text-center text-dark border-primary">
+        <div class="card-body">
+            {% if approval == 'True' %}
+            <form class="needs-validation" name="approveUserForm" id="userapprove" action="{% url 'Handover:approve_user_post' %}" method="post" novalidate>
+            {% csrf_token %}
+            {% else %}
+            <form class="needs-validation" name="approveUserForm" id="userapprove" action="{% url 'Handover:decline_user_post' %}" method="post" novalidate>
+            {% csrf_token %}
+            {% endif %}                
+                <div class="form-group">
+                    <label for="createTeamName">Your Email ID*:</label>
+                    {% if current_user %}
+                    <input type="email" class="form-control" placeholder="Your email ID" maxlength="350" name="approveuseremail" id="approvedUserEmail" value="{{current_user.useremail}}" required />
+                    {% else %}
+                    <input type="email" class="form-control" placeholder="Your email ID" maxlength="350" name="approveuseremail" id="approvedUserEmail" value="utkarsh.mehta@lntinfotech.com" required />
+                    {% endif %}
+                    <small class="form-text text-left">Maximum character length: 350</small>
+                    <div class="invalid-feedback">Please enter your email ID</div>
+                </div>
+                <div class="form-group">
+                    <label for="approveTeamLabel">Team</label>
+                    <input class="form-control" type="hidden" name="approveteam" value="{{team.teamid}}" required />                    
+                    <input class="form-control" type="text" name="approveteamname" value="{{team.teamname}}" required disabled/>
+                    <label for="approveUserLabel">User</label>
+                    <input class="form-control" type="hidden" name="approveuser" value="{{user.userid}}" required />
+                    <input class="form-control" type="text" name="approveusername" value="{{user.get_username}}" required disabled />
+                </div>
+                <div class="form-group text-center">
+                    {% if approval == 'True' %}
+                    <button type="submit" class="form-control btn btn-primary">Approve</button>
+                    {% else %}
+                    <button type="submit" class="form-control btn btn-danger">Decline</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock body %}
+
+{% block scripts %}
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+        'use strict';
+        window.addEventListener('load', function () {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.getElementsByClassName('needs-validation');
+            // Loop over them and prevent submission
+            var validation = Array.prototype.filter.call(forms, function (form) {
+                form.addEventListener('submit', function (event) {
+                    //console.log(team_check)
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock scripts %}

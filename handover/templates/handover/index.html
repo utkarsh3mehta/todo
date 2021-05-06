@@ -1,0 +1,309 @@
+﻿{% extends 'handover/layout.html' %}
+{% block navbar %}
+<a class="nav-item nav-link" href="{% url 'Handover:team' %}">Sign Up your Team</a>
+{% endblock navbar %}
+
+{% block body %}
+<h1 class="display-2 text-center"><abbr title="Just some three random alphabets">I.L.D.</abbr></h1>
+{% if reset_password_pre %}
+<h1 class="display-4 text-center">Submit O.T.P.</h1>
+<div class="container-fluid" style="max-width: 540px;">
+<p class="text-center">{{ reset_password_pre }}</p>
+
+<div class="card text-center text-dark border-secondary">
+    <div class="card-header">
+        <p>Reset your password</p>
+    </div>
+    <div class='card-body'>
+        <form id="forgotpassword" name="forgotPasswordForm" action="{% url 'Handover:forgotpassword' %}" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="forgotpasswordOTP">O.T.P.:</label>
+                <input type="number" class="form-control" placeholder="0000" autofocus name="forgotpasswordotp" maxlength="4" id="forgotPasswordOTP" required/>
+            </div>
+            <div class="form-group">
+                <button type="submit" id="forgotPasswordPre" class="form-control btn btn-primary">Reset Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% elif reset_password_post %}
+<h1 class="display-4 text-center">Password Reset</h1>
+<div class="container-fluid" style="max-width: 540px;">
+<p class="text-center">Hi {{ reset_password_post.get_username }}</p>
+
+<div class="card text-center text-dark border-secondary">
+    <div class="card-header">
+        <p>Reset your password</p>
+    </div>
+    <div class='card-body'>
+        <form id="resetPassword" name="resetPasswordForm" action="{% url 'Handover:updateuser' reset_password_post.userid %}" method="POST" class='needs-validation'>
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="resetpassword">New Password:</label>
+                <input type="password" class="form-control" placeholder="**********" autofocus name="resetpassword" minlength="8" maxlength="50" id="createUserPassword" onkeyup="passwordmatch();" required/>
+            </div>
+            <div class="form-group">
+                <label for="resetCofirmPassword">Confirm Password:</label>
+                <input type="password" class="form-control" placeholder="**********" name="resetconfirmpassword" id="cpassword" onkeyup="passwordmatch();" />
+                <small id="passwordfeedback" class="text-danger"></small>
+            </div>
+            <div class="form-group">
+                <button type="submit" id="resetPasswordPre" class="form-control btn btn-primary">Reset Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% else %}
+    <h1 class="display-4 text-center">User Sign In</h1>
+    <div class="container-fluid" style="max-width: 540px;">
+    {% if error_message %}
+    <p class="text-center text-danger">{{ error_message }}</p>
+    {% endif %}
+    {% if message %}
+    <p class="text-center text-success">{{ message }}</p>
+    {% endif %}
+    <div class="card text-center text-dark border-primary">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a href="#" id="signInLink" data-toggle="tab" class="nav-link active">Sign In</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" id="signUpLink" data-toggle="tab" class="nav-link">Sign Up</a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <form id="signIn" name="userLogin" action="{% url 'Handover:signin' %}" method="post" class="needs-validation0" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" class="form-control" placeholder="someone@example.com" autofocus name="signinemail" maxlength="350" id="loginUserEmail" required/>
+                    <div class="invalid-feedback">User email ID is a mandatory field</div>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" class="form-control" placeholder="***********" name="signinpassword" maxlength="50" id="loginUserPassword" required/>
+                    <div class="invalid-feedback">How can you forget this?</div>
+                </div>
+                <div class="form-group">
+                    <button type="submit" id="signinbutton" class="form-control btn btn-primary">Sign In</button>
+                </div>
+            </form>
+            <form id="signUp" name="newUserForm" action="{% url 'Handover:createuser' %}" method="post" class="needs-validation1" style="display:none" novalidate>
+                {% csrf_token %}
+                <div class="form-group row">
+                    <div class="col-md-6">
+                        <label for="loginFormFirstName">First Name*</label>
+                        <input type="text" class="form-control" placeholder="John" name="signupfirstname" maxlength="50" required />
+                        <small class='form-text text-left text-muted'>Character limit: 50</small>
+                        <div class="invalid-feedback">Your first name is a required information</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="loginFormLastName">Last Name</label>
+                        <input type="text" class="form-control" placeholder="Doe" name="signuplastname" maxlength="50" />
+                        <small class='form-text text-left text-muted'>Character limit: 50</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="loginFormEmail">Email*</label>
+                    <input type="email" class="form-control" placeholder="someone@example.com" name="signupemail" maxlength="350" id="createUserEmail" onchange="signupuseremailcheck();" required />
+                    <small id="emailajax" class="form-text text-danger"></small>
+                    <small id="ajax_load_message_useremail" class="form-text text-dark"></small>
+                    <small class="form-text text-left text-muted">Character limit: 350 | D.Y.K.: The <a href="https://laughingsquid.com/the-worlds-longest-active-email-address/" target="_blank">longest email ID</a> is 345 character long. | So, let's break that.</small>
+                    <small class='form-text text-left text-muted'>This app sends mails to users, please enter a valid email ID</small>
+                    <div class="invalid-feedback">Please enter your email ID</div>
+                </div>
+                <div class="form-group">
+                    <label for="loginFormTeam">Team</label>
+                    <small for="loginFormTeamHelp" class="form-text text-left text-muted">Press Ctrl/Cmd and click to select multiple teams</small>
+                    <select class="form-control" name="signupteam" id="createUserTeam" size="5" multiple required>
+                        <!--Teams table-->
+                        <option value='' selected disabled>Select your Team</option>
+                        {% for t in teams %}
+                        <option value="{{ t.teamid }}">{{ t.teamname }}</option>
+                        {% endfor %}
+                    </select>
+                    <small for="loginFormTeamHelp" class="form-text text-left text-muted">Can't find your team? <a href="{% url 'Handover:team' %}">Register here</a></small>
+                </div>
+                <div class="form-group">
+                    <label for="loginFormPassword">Password</label>
+                    <input type="password" class="form-control" name="signuppassword" onkeyup="passwordmatch();" id="createUserPassword" minlength="8" maxlength="50" required />
+                    <small for="loginFormPasswordHelp" class="form-text text-left text-muted">Min. length: 8 characters | Max. length: 50 characters</small>
+                    <div class="invalid-feedback">Please enter a valid password</div>
+                </div>
+                <div class="form-group">
+                    <label for="loginFormPassword">Confirm password</label>
+                    <input type="password" class="form-control" id="cpassword" onkeyup="passwordmatch();" minlength="8" maxlength="50" name="CPassword" required /> <!-- onchange="passwordmatch()" -->
+                    <small id="passwordfeedback" class="text-danger"></small>
+                </div>
+                <div class="form-group">
+                    <button type="submit" id="signupbutton" class="form-control btn btn-primary">Sign Up</button>
+                </div>
+            </form>
+            <form id="sendOTP" name="sendOTPForm" action="{% url 'Handover:sendotp' %}" method="POST" style="display: none">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="sentotpemail">Email:</label>
+                    <input type="text" class="form-control" placeholder="someone@example.com" name="sendotpuseremail" id="sendOTPUserEmail" required/>
+                </div>
+                <div class="form-group">
+                    <button type="submit" id="sendOTP" class="form-control btn btn-primary">Send OTP</button>
+                </div>
+            </form>
+        </div>
+    </div><br />
+    <button id="resetButton" class="btn btn-block btn-primary">Forgot Password?</button>
+</div>
+{% endif %}
+{% endblock body %}
+    
+{% block scripts %}
+{% if reset_password_pre %}
+{% elif reset_password_post %}
+<script>
+    function passwordmatch() {
+        //console.log('s');
+        var password, cpassword;
+        password = $('#createUserPassword').val();
+        cpassword = $('#cpassword').val();
+        //console.log(cpassword);
+        if (password != cpassword) {
+            $("#passwordfeedback").html("The passwords do not match.");
+        }
+        else {
+            $("#passwordfeedback").html("");
+        }
+    };
+</script>
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+        'use strict';
+        window.addEventListener('load', function () {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.getElementsByClassName('needs-validation');
+            // Loop over them and prevent submission
+            var validation = Array.prototype.filter.call(forms, function (form) {
+                form.addEventListener('submit', function (event) {
+                    var password, cpassword;
+                    password = $('#createUserPassword').val();
+                    cpassword = $('#cpassword').val();
+                    if (password != cpassword || form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% else %}
+<script>
+    $("#signInLink").click(function () {
+        $(".display-4.text-center").html("User Login");
+        $("#signIn").show();
+        $("#resetButton").show();
+        $("#signUp").hide();
+        $("#sendOTP").hide();
+    });
+    $("#signUpLink").click(function () {
+        $(".display-4.text-center").html("User Sign Up");
+        $("#signUp").show();
+        $("#signIn").hide();
+        $("#resetButton").hide();
+        $("#sendOTP").hide();
+    });
+    $("#resetButton").click(function () {
+        $(".display-4.text-center").html("Password Reset");
+        $("#signUp").hide();
+        $("#signIn").hide();
+        $("#resetButton").hide();
+        $("#sendOTP").show();
+    })
+</script>
+<script>
+function passwordmatch() {
+    //console.log('s');
+    var password, cpassword;
+    password = $('#createUserPassword').val();
+    cpassword = $('#cpassword').val();
+    //console.log(cpassword);
+    if (password != cpassword) {
+        $("#passwordfeedback").html("The passwords do not match.");
+    }
+    else {
+        $("#passwordfeedback").html("");
+    }
+};
+</script>
+<script>
+    function signupuseremailcheck () {
+        $("#ajax_load_message_useremail").html("Checking email availability. Please wait...");
+        var useremail = $("#createUserEmail").val();
+        $.ajax({
+            url: '{% url "Handover:checkuser" %}',
+            type: 'GET',
+            data: {useremail: useremail},
+            dataType: 'json',
+            success: function (data) {
+                if(data.is_taken) {
+                    $("#emailajax").html("This email ID is taken. Please use another email ID");
+                    $("#ajax_load_message_useremail").html("");
+                }
+                else {
+                    $("#emailajax").html("");
+                    $("#ajax_load_message_useremail").html("Email ID can be used");
+                }
+            }
+        });
+    };
+</script>
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+        'use strict';
+        window.addEventListener('load', function () {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.getElementsByClassName('needs-validation0');
+            // Loop over them and prevent submission
+            var validation = Array.prototype.filter.call(forms, function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+        'use strict';
+        window.addEventListener('load', function () {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.getElementsByClassName('needs-validation1');
+            // Loop over them and prevent submission
+            var validation = Array.prototype.filter.call(forms, function (form) {
+                form.addEventListener('submit', function (event) {
+                    var password, cpassword, check_email;
+                    password = $('#createUserPassword').val();
+                    cpassword = $('#cpassword').val();
+                    check_email = $("#emailajax").html()
+                    if (check_email != '' || password != cpassword || form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endif %}
+{% endblock scripts %}

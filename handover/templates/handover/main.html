@@ -1,0 +1,754 @@
+﻿{% extends 'handover/layout.html' %}{% load static %}
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/2.9.3/introjs.min.css" />
+<style>
+img {
+    height: 15px;
+}
+</style>
+<!-- Credits : https://stackoverflow.com/questions/32062876/removing-file-from-multiple-files-uploader-on-button-click-when-using-html5-file -->
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" />
+<style>
+  #filename {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.5em;
+  }
+  .file-preview {
+    background: #ccc;
+    border: 5px solid #fff;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+    display: inline-block;
+    width: 60px;
+    height: 60px;
+    text-align: center;
+    font-size: 14px;
+    margin-top: 5px;
+  }
+</style>
+{% endblock styles %}
+{% block navbar %}
+<a class='nav-item nav-link' href="{% url 'Handover:showmyself' %}?tab=handover">My Handovers {% if user.my_handover_unchecked %}<span class="badge badge-pill badge-light">{{user.my_handover_unchecked}}</span>{% endif %}</a>
+{% if team %}<a class='nav-item nav-link's id="starttour" href="#">Take the tour?</a>{% endif %}
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Hi, {{user.get_username}}
+    </a>
+    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+      <a class="dropdown-item" href="{% url 'Handover:showmyself' %}?tab=home">Profile</a>
+      <a class="dropdown-item" href="{% url 'Handover:logout' %}">Logout</a>
+      <div class="dropdown-divider"></div>
+      <a class="dropdown-item disabled" href="#">Redeem your points</a>
+    </div>
+</li>
+<form class="form-inline my-2 my-lg-0" action="{% url 'Handover:search' %}" method="GET">
+    <input class="form-control mr-sm-2" type="search" placeholder="Description and comment." name="search_string" aria-label="Search">
+    <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
+</form>
+{% endblock navbar %}
+
+{% block body %}
+<br/>
+<div class="container-fluid">
+    {% if team %}
+    <div class="row">
+        <div class="col-md col-sm col-lg">
+            <button type="button" id="newHandover" class="btn btn-outline-secondary" data-toggle="modal" data-target="#newhandvermodal">+ New Handover</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="container-fluid row">
+                <!--New Handover modal-->
+                <div class="modal fade bd-example-modal-lg" id="newhandvermodal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">New Handover</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                    <form id="newhandoverform" method="post" action="{% url 'Handover:createhandover' %}" class="needs-validation" novalidate>
+                                        {% csrf_token %}
+                                        <div class="form-group row">
+                                            <div class="col-md-6">
+                                                <label for="handoverTower" class="col-form-label">Team*</label>
+                                                <select class="form-control form-select" name="handoverTower" onchange="get_teammember(this.value);" id="HandoverTower" required>
+                                                    <option value=''>Select a team</option>
+                                                    {% for t in team %}
+                                                    <option value="{{ t.teamid }}">{{ t.teamname }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                {% if error_tower %}<p class="text-form text-danger">{{error_tower}}</p>{% endif %}
+                                                <div class='invalid-feedback'>Please select a team.</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="handoverSPOC" class="col-form-label">S.P.O.C.</label>
+                                                <select class="form-control" name="handoverSpoc" id="HandoverSPOC">
+                                                    <option value=''>Team?</option>
+                                                </select>
+                                                <small id="ajax_load_message_teammembers" class="text-form text-dark"></small>
+                                                <small class="text-form text-muted">Who knows best about the handover?</small>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md">
+                                                <label for="handoverDesription">Description*</label>
+                                                <textarea class="form-control" name="handoverDescription" id="HandoverDescription" maxlength="500" rows="3" required></textarea>
+                                                {% if error_description %}<p class="text-form text-danger">{{error_description}}</p>{% endif %}
+                                                <div class="invalid-feedback">The description is for the next person. Make sure to be expressive and explanatory.</div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-6">
+                                                <label for="handoverPriority" class="col-form-label col-md-4">Priority*</label>
+                                                <select class="form-control col-md-8" name="handoverPriority" id="HandoverPriority" required>
+                                                    <option value="1">High</option>
+                                                    <option value="2">Medium</option>
+                                                    <option value="3" selected>Low</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="handoverTicket" class="col-form-label col-md-6">Ticket No</label>
+                                                <input type="number" class="form-control col-md-8" name="ticketno" id="ticketno" min="10000" max="999999999999999" placeholder="Any ticket raised for this?"/>
+                                                <small class="text-form text-muted">Min: 5 digits | Max: 15 digits (for MS Cases)</small>
+                                            </div>
+                                        </div>
+                                    </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" value="Submit" form="newhandoverform" class="btn btn-primary">Create Handover</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--New Handover modal ends here-->
+                <!--Show Handover modal-->
+                <div class="modal fade bd-example-modal-lg" id="showHandoverModal" tabindex="-1" role="dialog" aria-labelledby="showHandoverModal" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="showHandoverTitle"></h5>&nbsp;
+                                <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="pills-info-tab" data-toggle="pill" href="#pills-info" role="tab" aria-controls="pills-info" aria-selected="true">Info</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="pills-attachment-tab" data-toggle="pill" href="#pills-attachment" role="tab" aria-controls="pills-attachment" aria-selected="false">Attachments</a>
+                                    </li>
+                                    <!--<li class="nav-item">
+                                        <a class="nav-link" id="pills-timeline-tab" data-toggle="pill" href="#pills-timeline" role="tab" aria-controls="pills-timeline" aria-selected="false">Tracked changes</a>
+                                    </li> -->
+                                </ul>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="tab-content" id="pills-tabContent">
+                                    <div class="tab-pane fade show active" id="pills-info" role="tabpanel" aria-labelledby="pills-info-tab">
+                                        <div class="form-group row">
+                                            <div class="col-md-6 row">
+                                                <label for="handoverCreatedBy" class="col-form-label col-md-4 col-sm-3">Created By:</label>
+                                                <label for="showHandoverCreator" class="col-form-label col-md-8 col-sm-9 text-left" id="showHandoverCreator"></label>
+                                            </div>
+                                            <div class="col-md-6 row">
+                                                <label for="handoverTower" class="col-form-label col-md-4 col-sm-3">Team:</label>
+                                                <label for="showHandoverTower" class="col-form-label col-md-8 col-sm-9 text-left" id="showHandoverTower"></label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-6 row">
+                                                <label for="handoverSPOC" class="col-form-label col-md-4 col-sm-3">S.P.O.C.:</label>
+                                                <label for="showHandoverSPOC" class="col-form-label col-md-8 col-sm-9 text-left" id="showHandoverSPOC"></label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md">
+                                                <label for="handoverDesription">Description:</label>
+                                                <textarea class="form-control" name="handoverDescription" id="showHandoverDescription" rows="3" disabled></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-6 row">
+                                                <label for="handoverStatus" class="col-form-label col-md-4 col-sm-3">Status:</label>
+                                                <label for="showHandoverStatus" class="col-form-label col-md-8 col-sm-9 text-left" id="showHandoverStatus"></label>
+                                            </div>
+                                            <div class="col-md-6 row">
+                                                <label for="handoverPriority" class="col-form-label col-md-4 col-sm-3">Priority:</label>
+                                                <label for="showHandoverPriority" class="col-form-label col-md-8 col-sm-9 text-left" id="showHandoverPriority"></label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-6 row">
+                                                <label for="handoverTicket" class="col-form-label col-md-4 col-sm-3">Ticket No.:</label>
+                                                <label for="showHandoverTicket" class="col-form-label col-md-8 col-sm-9 text-left" id="showHandoverTicket"></label>
+                                            </div>
+                                        </div>
+                                        <hr />
+                                        <div class="form-group">
+                                            <label for="handoverDiscussions">Comments <small class='text-muted'>(We are actively working to show the related comments here)</small></label><hr/>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="pills-attachment" role="tabpanel" aria-labelledby="pills-attachment-tab">
+                                        <div class="table-responsive">
+                                            <table class="table">
+                                                <thead>
+                                                    <th scope="col">Attachment</th>
+                                                    <th scope="col">Comment</th>
+                                                </thead>
+                                                <tbody id="showHandoverAttachmentsList"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <!--div class="tab-pane fade" id="pills-timeline" role="tabpanel" aria-labelledby="pills-timeline-tab">
+                                        <div class="table-responsive">
+                                            <table class="table">
+                                                <thead>
+                                                    <th scope="col">Date</th>
+                                                    <th scope="col">Change comment</th>
+                                                </thead>
+                                                <tbody id="showHandoverTimeLine"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>-->
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <a href="#" id="showHandoverUpdate" role="button" class="btn btn-primary">Edit</a>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--Show handover modal ends here-->
+                <!--Attach document modal starts here-->
+                <div class="modal fade bd-example-modal" id="attachDocumentModal" tabindex="-1" role="dialog" aria-labelledby="attachDocumentModal" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="attachDocumentModalTitle"></h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="attachDocumentForm" name="attachDocumentForm" action="#" method="POST" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <div class="input-group mb-3">
+                                        <div class="custom-file" id="attach_area">
+                                            <input type="file" class="custom-file-input" name="file" id="file" multiple>
+                                            <label class="custom-file-label" for="file">Choose file(s)</label>
+                                        </div>
+                                    </div>
+                                    <div id="filename"></div>
+                                    <br />
+                                    <div class="row form-group">
+                                        <div class="col-md-8">
+                                            <input type="text" class="form-control" name="attachment_comment" placeholder="Any comments?" />
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="submit" class="form-control btn btn-primary" value="Upload" />
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--Attach document modal ends here-->
+            </div>
+            {% if error_message %}<p class="text-form text-danger">{{error_message}}</p>{% endif %}
+            <br/><h4>Pending Handovers</h4>
+            <nav>
+                <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                    <a class="nav-item nav-link active" id="nav-all-tab" data-toggle="tab" href="#nav-all" role="tab" aria-controls="nav-all" aria-selected="true">All</a>
+                    {% for t in team %}
+                    <a class="nav-item nav-link" id="nav-{{t.teamid}}-tab" data-toggle="tab" href="#nav-{{t.teamid}}" role="tab" aria-controls="nav-{{t.teamid}}" aria-selected="true">{{t.teamname}}</a>
+                    {% endfor %}
+                    <a class="nav-item nav-link" id="nav-resolvedhandovers-tab" data-toggle="tab" href="#nav-resolvedhandovers" role="tab" aria-controls="nav-resolvedhandovers" aria-selected="true">Resolved Handovers</a>
+                </div>
+            </nav>
+            <br />
+            <div class="tab-content" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-all" role="tabpanel" aria-labelledby="nav-all-tab">
+                    <ul>
+                        {% if basictraining %}
+                        <li style="margin-bottom: 2px"><span class="badge badge-pill badge-danger" id="tour-last-udpate">5</span> <a href="#" onclick='$("#tour_comments").fadeToggle();' id="tour-title">Handover Title</a> - Team <a href="#" id="tour-see-more">See More</a> <span id="tour-priority" class="badge badge-pill badge-warning">Pri II</span><img src="{% static 'handover/images/comment.svg' %}" id="tour-hasComment-icon" alt="Comment icon"/><img src="{% static 'handover/images/attachment.svg' %}" id="tour-hasAttachment-icon" alt="Attachment icon"/> | <a href="#" id="tourUploadLink"><img src="{% static 'handover/images/upload.svg' %}" alt="Upload icon"/></a><a href="#" id="tourResolveLink"> <img src="{% static '/handover/images/check-circle-regular.svg' %}" alt="Resolve" /></a></li>
+                        <div id="tour_comments">
+                            <form id="tour-newComment" action="#" class="needs-validation" novalidate>
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-md-4 col-sm-4">
+                                        <input type="text" name="newComment" maxlength="100" placeholder="New comment" class="form-control" disabled />
+                                    </div>
+                                    <div class="col-md-1 col-sm-2">
+                                        <input class="form-control btn btn-info" type="submit" value="Post!" disabled/>
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <th scope="col">Comment</th>
+                                        <th scope="col">Commented by</th>
+                                        <th scope="col">Commented on</th>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Hi, I have an update. I would like to say...</td>
+                                            <td>Aakash Mishra</td>
+                                            <td>0 days ago</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Sup! I have an update. I would like to say...</td>
+                                            <td>Aakash Tiwari</td>
+                                            <td>2 days ago</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Please get this done on priority</td>
+                                            <td>Aakash Pandey</td>
+                                            <td>3 days ago</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% for hand in handover %}
+                        <li style="margin-bottom: 2px">{% if hand.hand_aging == 3 %}<span class="badge badge-pill badge-danger">{{hand.last_update}}</span>{% elif hand.hand_aging == 2 %}<span class="badge badge-pill badge-warning">{{hand.last_update}}</span>{% endif %} <a href="#" onclick='$("#attach_doc_{{hand.handoverid}}").hide();$("#related_commented{{hand.handoverid}}").fadeToggle();'>{{hand.get_title}}</a> - {{hand.tower}} <a href="#" id="{{hand.handoverid}}" onclick="showHandover(this.id)" data-toggle="modal" data-target="#showHandoverModal">See More</a> {% if hand.priority == 1 %}<span class="badge badge-pill badge-danger">Pri I</span>{% elif hand.priority == 2 %}<span class="badge badge-pill badge-warning">Pri II</span>{% endif %}{% if hand.has_comments %}<img src="{% static 'handover/images/comment.svg' %}" alt="Comment icon" title="This handover has comments" />{% endif %}{% if hand.has_attachments %}<img src="{% static 'handover/images/attachment.svg' %}" alt="Attachment icon" title="This handover has attachments" />{% endif %} | <a href="#" data-toggle="modal" data-target="#attachDocumentModal" name="{{hand.handoverid}}" onclick="attachment_modal(this.name);"><img src="{% static 'handover/images/upload.svg' %}" alt="Upload icon" title="Upload a new document to this handover?"/></a><a href="{% url 'Handover:resolve' hand.handoverid %}"> <img src="{% static '/handover/images/check-circle-regular.svg' %}" alt="Resolve" title="Resolve this handover?" /></a></li>
+                        <div id="related_commented{{hand.handoverid}}" style="display: none">
+                            <form id="newComment{{hand.handoverid}}" method="POST" action="{% url 'Handover:newcomment' hand.handoverid %}" class="needs-validation" novalidate>
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-md-4 col-sm-4">
+                                        <input type="text" name="newComment" maxlength="100" placeholder="New comment" class="form-control" required/>
+                                    </div>
+                                    <div class="col-md-1 col-sm-2">
+                                        <input class="form-control btn btn-info" type="submit" value="Post!" />
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <th scope="col">Comment</th>
+                                        <th scope="col">Commented by</th>
+                                        <th scope="col">Commented on</th>
+                                    </thead>
+                                    <tbody>
+                                        {% for com in hand.related_comment %}
+                                        <tr>
+                                            <td>{{com.discussiontext}}</td>
+                                            <td>{{com.createdby}}</td>
+                                            <td>{{com.age}} day{{com.age|pluralize}} ago</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% for t in team %}
+                <div class="tab-pane fade" id="nav-{{t.teamid}}" role="tabpanel" aria-labelledby="nav-{{t.teamid}}-tab">
+                    <ul>
+                        {% for hand in handover %}
+                        {% if hand.tower.teamid == t.teamid %}
+                        <li style="margin-bottom: 2px">{% if hand.hand_aging == 3 %}<span class="badge badge-pill badge-danger">{{hand.last_update}}</span>{% elif hand.hand_aging == 2 %}<span class="badge badge-pill badge-warning">{{hand.last_update}}</span>{% endif %} <a href="#" onclick='$("#related_commented_self{{hand.handoverid}}").fadeToggle();'>{{hand.get_title}}</a> - <a href="#" id="{{hand.handoverid}}" onclick="showHandover(this.id)" data-toggle="modal" data-target="#showHandoverModal">See More</a> {% if hand.priority == 1 %}<span class="badge badge-pill badge-danger">Pri I</span>{% elif hand.priority == 2 %}<span class="badge badge-pill badge-warning">Pri II</span>{% endif %}{% if hand.has_comments %}<img src="{% static 'handover/images/comment.svg' %}" alt="Comment icon" title="This handover has comments" />{% endif %}{% if hand.has_attachments %}<img src="{% static 'handover/images/attachment.svg' %}" alt="Attachment icon" title="This handover has attachements" />{% endif %} | <a href="#" data-toggle="modal" data-target="#attachDocumentModal" name="{{hand.handoverid}}" onclick="attachment_modal(this.name);"><img src="{% static 'handover/images/upload.svg' %}" alt="Upload icon" title="Upload a new document to this handover?" /></a><a href="{% url 'Handover:resolve' hand.handoverid %}"> <img src="{% static '/handover/images/check-circle-regular.svg' %}" alt="Resolve" title="Resolve this handover?" /></a></li>
+                        <div id="related_commented_self{{hand.handoverid}}" style="display: none">
+                            <form id="newComment_self{{hand.handoverid}}" method="POST" action="{% url 'Handover:newcomment' hand.handoverid %}" class="needs-validation" novalidate>
+                                {% csrf_token %}
+                                <div class="form-group row">
+                                    <div class="col-md-4 col-sm-4">
+                                        <input type="text" name="newComment" maxlength="100" placeholder="New comment" class="form-control" required/>
+                                    </div>
+                                    <div class="col-md-1 col-sm-2">
+                                        <input class="form-control btn btn-info" type="submit" value="Post!" />
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <th scope="col">Comment</th>
+                                        <th scope="col">Commented by</th>
+                                        <th scope="col">Commented on</th>
+                                    </thead>
+                                    <tbody>
+                                        {% for com in hand.related_comment %}
+                                        <tr>
+                                            <td>{{com.discussiontext}}</td>
+                                            <td>{{com.createdby}}</td>
+                                            <td>{{com.age}} day{{com.age|pluralize}} ago</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+                <div class="tab-pane fade" id="nav-resolvedhandovers" role="tabpanel" aria-labelledby="nav-resolvedhandovers-tab">
+                    <h4>Recently Resolved Handovers*</h4>
+                    <ul>
+                        {% for res in resolved %}
+                        <li style="margin-bottom: 2px"><a href="#" onclick='$("#related_commented{{res.handoverid}}").fadeToggle();'>{{res.get_title}}</a> - <a href="#" id="{{res.handoverid}}" onclick="showHandover(this.id)" data-toggle="modal" data-target="#showHandoverModal">{{res.tower}}</a><a href="{% url 'Handover:activate' res.handoverid %}"> <img src="{% static 'handover/images/times-circle-solid.svg' %}" alt="Activate" title="Re-activate this handover?" /></a></li>
+                        <div id="related_commented{{res.handoverid}}" style="display: none">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <th scope="col">Comment</th>
+                                        <th scope="col">Commented by</th>
+                                        <th scope="col">Commented on</th>
+                                    </thead>
+                                    <tbody>
+                                        {% for com in res.related_comment %}
+                                        <tr>
+                                            <td>{{com.discussiontext}}</td>
+                                            <td>{{com.createdby}}</td>
+                                            <td>{{com.age}} day{{com.age|pluralize}} ago</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </ul>
+                    <sub>* Retention policy - 30 days</sub>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <p>If you don't see your selected team, it means you need to approve yourself from the admin panel</p>
+    {% endif %}
+</div>
+{% endblock body %}
+
+{% block scripts %}
+{% if team %}
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+        'use strict';
+        window.addEventListener('load', function () {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.getElementsByClassName('needs-validation');
+            // Loop over them and prevent submission
+            var validation = Array.prototype.filter.call(forms, function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+<script>
+    function showHandover(id) {
+        //console.log(id);
+        $("#showHandoverTitle").html("");
+        $("#showHandoverTower").html("");
+        $("#showHandoverCreator").html("");
+        $("#showHandoverSPOC").html("");
+        $("#showHandoverDescription").html("");
+        $("#showHandoverStatus").html("");
+        $("#showHandoverPriority").html("");
+        $("#showHandoverTicket").html("");
+        $.ajax({
+            url: '{% url "Handover:showHandoverModal" %}',
+            type: 'GET',
+            data: {id: id},
+            dataType: 'json',
+            success: function (data) {
+                $("#showHandoverTitle").html(data.h_title);
+                $("#showHandoverTower").html(data.h_tower);
+                $("#showHandoverCreator").html(data.h_creator);
+                $("#showHandoverSPOC").html(data.h_spoc);
+                $("#showHandoverDescription").html(data.h_description);
+                $("#showHandoverStatus").html(data.h_status);
+                $("#showHandoverPriority").html(data.h_priority);
+                $("#showHandoverTicket").html(data.h_ticket);
+                document.getElementById("showHandoverUpdate").href = data.h_url;
+            }         
+        });
+        $.ajax({
+            url: '{% url "Handover:showHandoverModalAttachments" %}',
+            type: 'GET',
+            data: {id: id},
+            dataType: 'json',
+            success: function (data) {
+                document.getElementById("showHandoverAttachmentsList").innerHTML = "";            
+                var list = document.getElementById("showHandoverAttachmentsList");
+                //console.log(data);
+                for (i in data) {
+                    attachment = data[i]
+                    var path_info = attachment.fields.path
+                    //console.log(path_info.slice(path_info.lastIndexOf('/')));
+                    var row = document.createElement('tr');
+                    row.setAttribute('scope','row');
+                    var attach = document.createElement('td');
+                    var attach_link = document.createElement('a');
+                    attach_link.setAttribute('target','_blank');
+                    attach_link.setAttribute('href',path_info);
+                    attach_link.appendChild(document.createTextNode(path_info.slice(path_info.lastIndexOf('/'))));
+                    attach.appendChild(attach_link);
+                    row.appendChild(attach);
+                    var com = document.createElement('td');
+                    com.appendChild(document.createTextNode(attachment.fields.attachcomment));
+                    row.appendChild(com);
+                    list.appendChild(row);
+                }
+                return list;
+            }
+        })
+    };
+</script>
+<script>
+    function get_teammember(team_id) {
+        //console.log(team_id);
+        if(team_id === '') {
+            $("#HandoverSPOC").html("");
+            $("#HandoverSPOC").append(
+                $('<option></option>').val('').html('Team?')
+            );
+        }
+        else {
+            $("#ajax_load_message_teammembers").html("Fetching members information. Please wait...");
+	        $("#HandoverSPOC").html("");
+            $("#HandoverSPOC").append(
+                $('<option></option>').val('').html('Assign a SPOC')
+            );
+            $.ajax({
+                url: '{% url "Handover:teammembers" %}',
+                type:  "GET",
+                data: {team_id: team_id},
+                dataType: 'json',
+                success: function (data) {
+                    for (i in data) {
+                        user_info = data[i];
+                        //console.log(user_info);
+                        /* console.log(user_info.pk);
+                        console.log(user_info.fields.userfirstname); */
+                        if(user_info.fields.userlastname === null) {
+                            $("#HandoverSPOC").append(
+                                $('<option></option>').val(user_info.pk).html(user_info.fields.userfirstname)
+                            );
+                        }
+                        else {
+                            $("#HandoverSPOC").append(
+                                $('<option></option>').val(user_info.pk).html(user_info.fields.userfirstname+' '+user_info.fields.userlastname)
+                            );
+                        }
+                    }
+                    $("#ajax_load_message_teammembers").html("");
+                }
+            });
+            // $.ajax({
+            //     type: "GET",
+            //     data: {id: id},
+            //     dataType: "json",
+            //     success: function (data) {
+            //         document.getElementById("showHandoverTimeLine").innerHTML = "";
+            //         list = document.getElementById("showHandoverTimeLine");
+            //         for (i in data) {
+            //             change = data[i]
+            //             //console.log(change);
+            //             var row = document.createElement('tr');
+            //             row.setAttribute('scope','row');
+            //             var changeon = document.createElement('td');
+            //             changeon.appendChild(document.createTextNode(change.fields.changedon));
+            //             row.appendChild(changeon);
+            //             var comment = document.createElement('td');
+            //             comment.appendChild(document.createTextNode(change.fields.changecomment));
+            //             row.appendChild(comment);
+            //             list.appendChild(row);
+            //         }
+            //         return list;
+            //     }
+            // });
+        }
+    };
+</script>
+<script>
+function attachment_modal(id) {
+    //console.log(id);
+    document.getElementById('attachDocumentModalTitle').innerHTML = "";
+    document.attachDocumentForm.action = "#";
+    $.ajax({
+        url: '{% url "Handover:attachment_modal" %}',
+        data: {id: id},
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+            //console.log(data.h_title);
+            document.getElementById('attachDocumentModalTitle').innerHTML = "Attach doc to "+data.h_title;
+            document.attachDocumentForm.action = data.h_url;
+        }
+    });
+}
+</script>
+<!-- Credits : https://stackoverflow.com/questions/32062876/removing-file-from-multiple-files-uploader-on-button-click-when-using-html5-file -->
+<script>
+    var inputFile = $("#attach_area").find("input");
+    var finalFiles = {};
+    $(function () {
+
+        inputFile.on('change', function (e) {
+            finalFiles = {};
+            $('#filename').html("");
+            var fileNum = this.files.length,
+                initial = 0,
+                counter = 0;
+
+            $.each(this.files, function (idx, elm) {
+                finalFiles[idx] = elm;
+            });
+
+            for (initial; initial < fileNum; initial++) {
+                counter = counter + 1;
+                $('#filename').append('<div id="file_' + initial + '"><span class="fa-stack fa-lg"><i class="fa fa-file fa-stack-1x "></i><strong class="fa-stack-1x" style="color:#FFF; font-size:12px; margin-top:2px;">' + counter + '</strong></span> ' + this.files[initial].name + '&nbsp;&nbsp;<span class="fa fa-times-circle fa-lg closeBtn" onclick="removeLine(this)" title="remove"></span></div>');
+            }
+        });
+    })
+
+    function removeLine(obj) {
+        inputFile.val('');
+        var jqObj = $(obj);
+        var container = jqObj.closest('div');
+        var index = container.attr("id").split('_')[1];
+        container.remove();
+
+        delete finalFiles[index];
+        //console.log(finalFiles);
+    }
+</script>
+<!-- Credits : https://stackoverflow.com/questions/32062876/removing-file-from-multiple-files-uploader-on-button-click-when-using-html5-file -->
+{% if basictraining %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/2.9.3/intro.min.js"></script>
+<script>
+$(function() {
+    var introguide = introJs();
+    var startbtn = $('#starttour');
+    introguide.setOptions({
+        exitOnOverlayClick: 'false',
+        showStepNumbers: 'false',
+        disableInteraction: 'true',
+        steps: [
+            {
+                element: '#nowordlikethis',
+                intro: 'Welcome to a Shift Handover Management website<br/>Here you enter your shift work that you would like to handover to your team members when your shift ends.<br/><br/><b>Use the arror key for navigation<br/>Press ESC to skip</b>',
+                position: 'bottom-middle',
+            },
+            {
+                element: '#newHandover',
+                intro: 'This button lets you create a handover',
+                position: 'right',
+            },
+            {
+                element: '#nav-tab',
+                intro: 'These are all your teams tab. Click on any one to see handovers specific to that team.',
+                position: 'top',
+            },
+            {
+                element: '#nav-resolvedhandovers-tab',
+                intro: 'This tab shows recently resolved handovers',
+                position: 'top',
+            },
+            {
+                element: '#tour-last-udpate',
+                intro: 'This badge here shows that it\'s been too long now for the handover to still stay. And the number in it shows when was the handover last updated.',
+                position: 'top',
+            },
+            {
+                element: '#tour-title',
+                intro: 'Clicking on the title will show you the related comments',
+                position: 'right',
+            },
+            {
+                element: '#tour-see-more',
+                intro: 'Click here to see the handover expanded and in detail',
+                position: 'right',
+            },
+            {
+                element: '#tour-priority',
+                intro: 'This shows the priority of the handover',
+                position: 'top',
+            },
+            {
+                element: '#tour-hasComment-icon',
+                intro: 'This icon shows that the handover has comments to it',
+                position: 'right',
+            },
+            {
+                element: '#tour-hasAttachment-icon',
+                intro: 'This icon shows that the handover has attachments to it',
+                position: 'right',
+            },
+            {
+                element: '#tourUploadLink',
+                intro: 'This icon lets you add attachments to the handover',
+                position: 'top',
+            },            
+            {
+                element: '#tourResolveLink',
+                intro: 'Click this link to resolve the handover on the go',
+                position: 'right',
+            },
+            {
+                element: '#tour_comments',
+                intro: 'This section shows the related comments',
+                position: 'bottom',
+            },
+            {
+                element: '#sendFeedbackButton',
+                intro: 'Send feedback about this product.<br/>We will be happy to know!',
+                position: 'left',
+            },
+            {
+                element: '#starttour',
+                intro: '<i>Click this button to take the tour again!</i>',
+                position: 'bottom',
+            },
+        ],
+    });
+    
+    introguide.start();
+
+    introguide.oncomplete(function() {
+        window.location = '{% url "Handover:basictraining" %}';
+    });
+
+    introguide.onexit(function() {
+        window.location = '{% url "Handover:basictraining" %}';
+    });
+})
+</script>
+{% else %}
+<script>
+$(function() {
+    var startbtn = $("#starttour");
+    startbtn.on('click', function(e) {
+        window.location = '{% url "Handover:basictraining" %}';
+    });
+})
+</script>
+{% endif %}
+{% endif %}
+{% endblock scripts %}

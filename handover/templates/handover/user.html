@@ -1,0 +1,443 @@
+{% extends 'handover/layout.html' %}
+
+{% block styles %}
+<style>
+    hr {
+        padding:0%;
+        margin: 0%;
+    }
+</style>
+{% endblock styles %}
+
+{% block navbar %}
+<a class='nav-item nav-link' href='{% url "Handover:main" %}'>Home</a>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Hi, {{username}}
+    </a>
+    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+      <a class="dropdown-item" href="{% url 'Handover:logout' %}">Logout</a>
+      <div class="dropdown-divider"></div>
+      <a class="dropdown-item disabled" href="#">Redeem your points</a>
+    </div>
+  </li>
+{% endblock navbar %}
+
+{% block body %}
+<br/>
+<div class="container-fluid">
+    {% if user.user_is_active %}{% else %}<small class="text-left text-danger">You are not active right now. You can only see this page. To view other pages, activate yourself.</small><br/><small class="text-left text-danger"> People will not be able to see you, or assign you handovers.</small>{% endif %}
+    <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <a {% if tab == "home" %} class="nav-item nav-link active" {% else %} class="nav-item nav-link" {% endif %} id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">Home</a>
+            <a {% if tab == "profile" %} class="nav-item nav-link active" {% else %} class="nav-item nav-link" {% endif %} id="nav-profile-tab" data-toggle="tab" href="#nav-profile" role="tab" aria-controls="nav-profile" aria-selected="false">Profile</a>
+            <a {% if tab == "handover" %} class="nav-item nav-link active" {% else %} class="nav-item nav-link" {% endif %} id="nav-handover-tab" data-toggle="tab" href="#nav-handover" role="tab" aria-controls="nav-handover" aria-selected="false">Handover{% if user.my_handover_unchecked %}<span class="badge badge-pill badge-light">{{user.my_handover_unchecked}}</span>{% endif %}</a>
+            <a {% if tab == "teams" %} class="nav-item nav-link active" {% else %} class="nav-item nav-link" {% endif %} id="nav-teams-tab" data-toggle="tab" href="#nav-teams" role="tab" aria-controls="nav-teams" aria-selected="false">Teams</a>
+            <a {% if tab == "activities" %} class="nav-item nav-link active" {% else %} class="nav-item nav-link" {% endif %} id="nav-activity-tab" data-toggle="tab" href="#nav-activity" role="tab" aria-controls="nav-activity" aria-selected="false">Activities</a>
+            <a {% if tab == "edit_info" %} class="nav-item nav-link active" {% else %} class="nav-item nav-link" {% endif %} id="nav-update-tab" data-toggle="tab" href="#nav-update" role="tab" aria-controls="nav-update" aria-selected="false">Edit Info</a>
+        </div>
+    </nav>
+    <br />
+    <div class="tab-content" id="nav-tabContent">
+        <div {% if tab == "home" %} class="tab-pane fade show active" {% else %} class="tab-pane fade" {% endif %} id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+            <fieldset>
+                <legend>General Information</legend>
+                <div class='text-center'>
+                        <h1 class="display-1">{{user.userreputation}}</h1>
+                        <p>Reputation</p>
+                </div>
+                <div class='row'>
+                    <div class='col-md-6'>
+                        <label>{{user.userfirstname}}</label><hr />
+                        <small class='text-muted'>First Name</small>
+                    </div>
+                    {% if user.userlastname %}
+                    <div class='col-md-6'>
+                        <label>{{user.userlastname}}</label><hr/>
+                        <small class='text-muted'>Last Name</small>
+                    </div>
+                    {% endif %}
+                </div>
+                <p></p>
+                <div class='row'>
+                    <div class='col-md-6'>
+                        <label>{{user.useremail}}</label><hr/>
+                        <small class='text-muted'>Email Address</small>
+                    </div>
+                </div>
+                <p></p>
+                <div class='col-md-6'>
+                    <label>Your teams</label><hr />
+                    <ul class="list-group list-group-flush">
+                        {% for team in teams %}
+                        <li class="list-group-item">{{team.teamname}}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </fieldset>
+        </div>
+        <div {% if tab == "profile" %} class="tab-pane fade show active" {% else %} class="tab-pane fade" {% endif %} id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+            <fieldset>
+                <legend>Account Details</legend>
+                <div class='row'>
+                    <div class='col-md-6'>
+                        <label>{{user.usercreatedon}}</label><hr />
+                        <small class='text-muted'>Joined on</small>
+                    </div>
+                    <div class='col-md-6'>
+                        <label>{{user.last_logon}}</label><hr/>
+                        <small class='text-muted'>Last logged in</small>
+                    </div>
+                </div>
+                <p></p>
+                <div class='row'>
+                    <div class='col-md-6'>
+                        {% if user.user_is_active %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="user_state" value='user_state' checked disabled>
+                            <label class="form-check-label">Is active?</label>
+                        </div>
+                        {% else %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="user_state" value='user_state' disabled>
+                            <label class="form-check-label">Is active?</label>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div {% if tab == "handover" %} class="tab-pane fade show active" {% else %} class="tab-pane fade" {% endif %} id="nav-handover" role="tabpanel" aria-labelledby="nav-handover-tab">
+            <fieldset>
+                <legend>Handovers</legend>
+                <p>Handover where you are the SPOC</p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">Title</th>
+                                <th scope="col">Team</th>
+                                <th scope="col">Priority</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Created by</th>
+                            </tr>
+                        </thead>
+                        {% for hand in user.my_handover %}
+                        <tbody>
+                            {% if hand.checkedbyspoc %}
+                            <tr>
+                            {% else %}
+                            <tr class="table-warning">
+                            {% endif %}
+                                <td scope="row"><a href="{% url 'Handover:showhandover' hand.handoverid %}">{{hand.get_title}}</a></td>
+                                <td>{{hand.tower.teamname}}</td>
+                                <td>{{hand.priority}}</td>
+                                <td>{{hand.status}}</td>
+                                <td>{{hand.createdby.get_username}}</td>
+                            </tr>                            
+                        </tbody>
+                        {% endfor %}
+                    </table>
+                </div>
+            </fieldset>
+        </div>
+        <div {% if tab == "teams" %} class="tab-pane fade show active" {% else %} class="tab-pane fade" {% endif %} id="nav-teams" role="tabpanel" aria-labelledby="nav-teams-tab">
+            <fieldset>
+                <legend>Teams and Members</legend>
+                {% if teams %}
+                <div class='col-md-6 row'>
+                    <label for='yourTeams' class='col-md-4 col-sm-4'>Your teams</label>
+                    <select class='form-control form-select col-md-8' onchange="get_teammember(this.value);">
+                        <option value=''>Select a team</option>
+                        {% for team in teams %}
+                        <option value='{{team.teamid}}'>{{team.teamname}}</option>
+                        {% endfor %}
+                    </select>
+                    <small class='offset-md-4 text-muted'>Select a team to know your colleagues</small>
+                </div>
+                <br/>
+                <div class="col-md row">
+                    <p class="text-muted text-left" id="ajax_load_message_team"></p>
+                    <div class="table-responsive">
+                        <table id="teammembertable" class='table'>
+                            <thead>
+                                <tr>
+                                    <th scope="col" onclick="sortTable(0)">Name</th>
+                                    <th scope="col" onclick="sortTable(1)">Email</th>
+                                    <th scope="col" onclick="sortTable(2)">Point(s) Earned</th>
+                                    <!-- <th scope="col" onclick="sorttable(3)">Membership</th> -->
+                                </tr>
+                            </thead>
+                            <tbody id='user_list_table'>
+                                {% for user in users %}
+                                <tr>
+                                    <td scope='row'>{{user.get_username}}</td>
+                                    <td>{{user.useremail}}</td>
+                                    <td>{{user.userreputation}}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <small class="text-left form-text text-muted">We are actively working to show the status of members.</small>
+                </div>
+                {% else %}
+                <p>If you don't see your selected team, it means you need to approve yourself from the admin panel</p>
+                {% endif %}
+            </fieldset>
+        </div>
+        <div {% if tab == "activities" %} class="tab-pane fade show active" {% else %} class="tab-pane fade" {% endif %} id="nav-activity" role="tabpanel" aria-labelledby="nav-activity-tab">
+            <fieldset>
+                <legend>Activities</legend>
+                {% if changes %}
+                <div class="table-responsive">
+                    <table class='table' id='activitiesTable'>
+                        <thead class='thead-light'>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Handover</th>
+                                <th scope="col">Comment</th>
+                                <th scope="col">Point(s) Earned</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for change in changes %}
+                            <tr>
+                                <td scope="row">{{change.changedon}}</td>
+                                <td>{{change.handover.get_title}}</td>
+                                <td>{{change.changecomment}}</td>
+                                <td>{{change.changetypeid.changetypeweight}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- <div class="pagination">
+                    <span class="step-links">
+                        {% if changes.has_previous %}
+                            <a href="?page=1">&laquo; first</a>
+                            <a href="?page={{ changes.previous_page_number }}">previous</a>
+                        {% endif %}
+                
+                        <span class="current">
+                            Page {{ changes.number }} of {{ changes.paginator.num_pages }}.
+                        </span>
+                
+                        {% if changes.has_next %}
+                            <a href="?page={{ changes.next_page_number }}">next</a>
+                            <a href="?page={{ changes.paginator.num_pages }}">last &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div> -->
+                {% else %}
+                <p>No activity found</p>
+                {% endif %}
+            </fieldset> 
+        </div>
+        <div {% if tab == "edit_info" %} class="tab-pane fade show active" {% else %} class="tab-pane fade" {% endif %} id="nav-update" role="tabpanel" aria-labelledby="nav-update-tab">
+            <fieldset>
+                <legend>Update Info</legend>
+                <small class="text-danger">{{error_message}}</small>
+                {% if user.user_is_active %}
+                <a role='button' href="{% url 'Handover:user_state' 0 %}" class='btn btn-danger'>Deactivate User</a>
+                {% else %}
+                <a role='button' href="{% url 'Handover:user_state' 1 %}" class='btn btn-success'>Activate User</a>
+                {% endif %}
+                <form id="updateUser" name="updateUserForm" action="{% url 'Handover:updateuser' user.userid %}" method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <div class="form-group row">
+                        <div class="col-md-4">
+                            <label for="updateFormFirstName">First Name</label>
+                            <input type="text" class="form-control" name="updatefirstname" maxlength="50" value="{{user.userfirstname}}" required />
+                            <small class='form-text text-left text-muted'>Character limit: 50</small>
+                            <div class="invalid-feedback">Your first name is a required information</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="updateFormLastName">Last Name</label>
+                            {% if user.userlastname %}
+                            <input type="text" class="form-control" name="updatelastname" maxlength="50" value="{{user.userlastname}}" />
+                            {% else %}
+                            <input type="text" class="form-control" name="updatelastname" maxlength="50" placeholder="No last name" />
+                            {% endif %}
+                            <small class='form-text text-left text-muted'>Character limit: 50</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="updateFormEmail">Email</label>
+                            <input type="email" class="form-control" name="updateuseremail" maxlength="350" value="{{user.useremail}}" id="updateUserEmail" onchange="updateuseremailcheck();" required />
+                            <small id="emailajax" class="form-text text-danger"></small>
+                            <small id="ajax_load_message_useremail" class="form-text text-dark"></small>
+                            <small class='form-text text-left text-muted'>This app sends mails to users, please enter a valid email ID</small>
+                            <small class="form-text text-left text-muted">Character limit: 350 | D.Y.K.: The <a href="https://laughingsquid.com/the-worlds-longest-active-email-address/" target="_blank">longest email ID</a> is 345 character long. | Let's break it then.</small>
+                            <div class="invalid-feedback">Please enter your email ID</div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-6">
+                            <label for="updateFormNewTeam">Join New Teams?</label>
+                            <select class="form-control" name="updateformnewteam" multiple>
+                                <option value=''>Happy with where I am...</option>
+                                {% for new in new_team %}
+                                <option value="{{new.teamid}}">{{new.teamname}}</option>
+                                {% endfor %}
+                            </select>
+                            <small for="loginFormTeamHelp" class="form-text text-left text-muted">Press Ctrl/Cmd and click to select multiple teams and deselect as well</small>
+                        </div>
+                        <div class="col-6">
+                            <label for="updateFormOldTeam">Leave Team?</label>
+                            <select class="form-control" name="updateformoldteam" multiple>
+                                <option value=''>Happy with where I am...</option>
+                                {% for team in teams %}
+                                <option value="{{team.teamid}}">{{team.teamname}}</option>
+                                {% endfor %}
+                            </select>
+                            <small for="loginFormTeamHelp" class="form-text text-left text-muted">Press Ctrl/Cmd and click to select multiple teams and deselect as well</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" id="updatebutton" class="form-control btn btn-primary">Update</button>
+                    </div>
+                </form>
+                <small class="form-text text-left text-muted">To reset your password, click on the Forgot Password button on the login page.</small>
+            </fieldset>
+        </div>
+    </div>
+</div>
+{% endblock body %}
+
+{% block scripts %}
+<script>
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById("teammembertable");
+        switching = true;
+        // Set the sorting direction to ascending:
+        dir = "asc"; 
+        /* Make a loop that will continue until
+        no switching has been done: */
+        while (switching) {
+        // Start by saying: no switching is done:
+        switching = false;
+        rows = table.rows;
+        /* Loop through all table rows (except the
+        first, which contains table headers): */
+        for (i = 1; i < (rows.length - 1); i++) {
+            // Start by saying there should be no switching:
+            shouldSwitch = false;
+            /* Get the two elements you want to compare,
+            one from current row and one from the next: */
+            x = rows[i].getElementsByTagName("TD")[n];
+            y = rows[i + 1].getElementsByTagName("TD")[n];
+            /* Check if the two rows should switch place,
+            based on the direction, asc or desc: */
+            if (dir == "asc") {
+            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                // If so, mark as a switch and break the loop:
+                shouldSwitch = true;
+                break;
+            }
+            } else if (dir == "desc") {
+            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                // If so, mark as a switch and break the loop:
+                shouldSwitch = true;
+                break;
+            }
+            }
+        }
+        if (shouldSwitch) {
+            /* If a switch has been marked, make the switch
+            and mark that a switch has been done: */
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+            // Each time a switch is done, increase this count by 1:
+            switchcount ++; 
+        } else {
+            /* If no switching has been done AND the direction is "asc",
+            set the direction to "desc" and run the while loop again. */
+            if (switchcount == 0 && dir == "asc") {
+            dir = "desc";
+            switching = true;
+            }
+        }
+        }
+    }
+</script>
+<script>
+    function get_teammember(team_id) {
+        //console.log(team_id);
+        $("#user_list_table").html("");
+        if(team_id === '') {
+            $("#ajax_load_message_team").html("");
+        }
+        else {
+            //console.log(team_id);
+            $("#ajax_load_message_team").html("Fetching team information...");
+            $.ajax({
+                url: '{% url "Handover:teammembers" %}',
+                type:  "GET",
+                data: {team_id: team_id},
+                dataType: 'json',
+                success: function (data) {
+                    var insidehtml = '';
+                    for (i in data) {
+                        user_info = data[i];
+                        /* console.log(user_info);
+                        console.log(user_info.pk);
+                        console.log(user_info.fields.userfirstname); */
+                        if(user_info.fields.userlastname === null) {
+                            insidehtml += "<tr><td scope='row'>"+user_info.fields.userfirstname+" "+"</td><td>"+user_info.fields.useremail+"</td><td>"+user_info.fields.userreputation+"</td></tr>";
+                        }
+                        else {
+                            insidehtml += "<tr><td scope='row'>"+user_info.fields.userfirstname+" "+user_info.fields.userlastname+"</td><td>"+user_info.fields.useremail+"</td><td>"+user_info.fields.userreputation+"</td></tr>";
+                        }
+                    }
+                    $("#user_list_table").html(insidehtml);
+                    $("#ajax_load_message_team").html("");
+                }
+            });
+        }
+    };
+</script>
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+        'use strict';
+        window.addEventListener('load', function () {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.getElementsByClassName('needs-validation');
+            // Loop over them and prevent submission
+            var validation = Array.prototype.filter.call(forms, function (form) {
+                form.addEventListener('submit', function (event) {
+                    var check_email = $("#emailajax").html();
+                    if (check_email != '' || form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+<script>
+    function updateuseremailcheck () {
+        $("#ajax_load_message_useremail").html("Checking email availability. Please wait...");
+        var useremail = $("#updateUserEmail").val();
+        $.ajax({
+            url: '{% url "Handover:checkuser" %}',
+            type: 'GET',
+            data: {useremail: useremail},
+            dataType: 'json',
+            success: function (data) {
+                if(data.is_taken) {
+                    $("#emailajax").html("This email ID is taken. Please use another email ID");
+                    $("#ajax_load_message_useremail").html("");
+                }
+                else {
+                    $("#emailajax").html("");
+                    $("#ajax_load_message_useremail").html("Email ID can be used");
+                }
+        }
+        });
+    };
+</script>
+{% endblock scripts %}

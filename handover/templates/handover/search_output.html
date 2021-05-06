@@ -1,0 +1,49 @@
+{% extends 'handover/layout.html' %}
+{% block navbar %}
+<a class='nav-item nav-link' href='{% url "Handover:main" %}'>Home</a>
+<form class="form-inline my-2 my-lg-0" action="{% url 'Handover:search' %}" method="GET">
+    <input class="form-control mr-sm-2" type="search" placeholder="Description and comment." name="search_string" aria-label="Search">
+    <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
+</form>
+{% endblock navbar %}
+{% block body %}
+<div class="container-fluid">
+    <p>Searched for '{{search_string}}'</p>
+    <fieldset>
+        {% if h_description %}
+        <legend>Found in Description</legend>
+        <ul>
+            {% for h_d in h_description %}
+            <li>
+                <a href="{% url 'Handover:showhandover' h_d.handoverid %}">{{h_d.description}}</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <p>Not found in any description.</p>
+        {% endif %}
+    </fieldset>
+
+    <fieldset></fieldset>
+        {% if comments %}
+        <legend>Found in comments</legend>
+            <table class='table'>
+                <thead>
+                    <th>Comment</th>
+                    <th>Handover</th>
+                </thead>
+                <tbody>
+                    {% for com in comments %}
+                    <tr>
+                        <td>{{com.discussiontext}}</td>
+                        <td><a href="{% url 'Handover:showhandover' com.handoverid.handoverid %}">{{com.handoverid.get_title}}</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Not found in any comment.</p>
+        {% endif %}
+    </fieldset>
+</div>
+{% endblock body %}

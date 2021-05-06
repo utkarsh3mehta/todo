@@ -1,0 +1,38 @@
+version: '3.7'
+
+services:
+  db:
+      restart: always
+      image: postgres:11.5
+      volumes:
+        - postgres_data:/var/lib/postgresql/data/
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: gunicorn thpone.wsgi:application --bind 0.0.0.0:3000
+    expose:
+      - 3000
+    env_file: .env
+    volumes:
+      - static_volume:/code/static
+      - media_volume:/code/attachments
+    depends_on:
+      - db
+
+  nginx:
+    build: ./nginx
+    ports:
+      - 8000:443
+    volumes:
+      - static_volume:/code/static
+      - media_volume:/code/attachments
+    depends_on:
+      - web
+      
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+

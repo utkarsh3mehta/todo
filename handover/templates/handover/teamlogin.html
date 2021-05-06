@@ -1,0 +1,94 @@
+﻿{% extends 'handover/layout.html' %}
+
+{% block navbar %}
+<a class="nav-item nav-link" href="{% url 'Handover:index' %}">Home</a>
+{% endblock navbar %}
+
+{% block body %}
+
+<h1 class="display-2 text-center"><abbr title="Just some three random alphabets">I.L.D.</abbr></h1>
+<h1 class="display-4 text-center">Team Sign Up</h1><br />
+{% if message %}
+<p class='text-success text-center'>{{message}}<a href="{% url 'Handover:index' %}">index page.</a></p>
+{% endif %}
+{% if error_message %}
+<p class='text-danger text-center'>{{error_message}}</p>
+{% endif %}
+<div class="container-fluid" style="max-width: 540px;">
+    <div class="card text-dark border-primary">
+        <div class="card-body">
+            <form class="needs-validation" name="newUserForm" id="teamSignUp" action="{% url 'Handover:createteam' %}"
+                method="post" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="createTeamEmail">Team Email*</label>
+                    <input type="text" class="form-control" placeholder="Your team email..." autofocus maxlength="200" name="TeamEmail" id="createTeamEmail" required />
+                    <small id="email_result" class="text-danger"></small>
+                    <small id="ajax_load_message_teamemail" class="form-text text-dark"></small>
+                    <small class="form-text">Maximum character length: 200</small>
+                    <small class='form-text'>This app sends mails to teams, please enter a valid email ID</small>
+                    <div class="invalid-feedback">Please enter the team email ID</div>
+                </div>
+                <div class="form-group">
+                    <label for="createTeamName">Team Name*</label>
+                    <input type="text" class="form-control" placeholder="Your team name..." maxlength="100" name="TeamName" id="createTeamName" required />
+                    <small class="form-text">Maximum character length: 100</small>
+                    <div class="invalid-feedback">Please enter the team name</div>
+                </div>
+                <div class="form-group text-center">
+                    <button type="submit" id="createteambutton" class="form-control btn btn-primary">Create Team</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock body %}
+
+{% block scripts %}
+<script>
+    $('#createTeamEmail').change(function () {
+        $("#ajax_load_message_teamemail").html("Checking email availability. Please wait...");
+        var email = $("#createTeamEmail").val();
+        //console.log(email);
+        $.ajax({
+            url: '{% url "Handover:checkteam" %}',
+            type: 'GET',
+            data: { email: email },
+            dataType: 'json',
+            success: function (data) {
+                if(data.is_taken) {
+                    $("#email_result").html("This email is already taken by " + data.team_name);
+                    $("#ajax_load_message_teamemail").html("");
+                }
+                else {
+                    $("#email_result").html("")
+                    $("#ajax_load_message_teamemail").html("Email ID can be used");
+                }
+            }
+        });
+    });
+
+</script>
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+        'use strict';
+        window.addEventListener('load', function () {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.getElementsByClassName('needs-validation');
+            // Loop over them and prevent submission
+            var validation = Array.prototype.filter.call(forms, function (form) {
+                form.addEventListener('submit', function (event) {
+                    var team_check = $("#email_result").html()
+                    //console.log(team_check)
+                    if (team_check != '' || form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock scripts %}

@@ -1,0 +1,134 @@
+{% extends 'handover/layout.html' %}
+
+{% block navbar %}
+<a class='nav-item nav-link' href='{% url "Handover:main" %}'>Home</a>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Hi, {{user_name.get_username}}
+    </a>
+    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+      <a class="dropdown-item" href="{% url 'Handover:showmyself' %}?tab=home">Profile</a>
+      <a class="dropdown-item" href="{% url 'Handover:logout' %}">Logout</a>
+      <div class="dropdown-divider"></div>
+      <a class="dropdown-item disabled" href="#">Redeem your points</a>
+    </div>
+  </li>
+{% endblock navbar %}
+
+{% block body %}
+<div class="container-fluid">
+    <form method="post" action="{% url 'Handover:updatehandover' handover.handoverid %}" class="needs-validation">
+        {% csrf_token %}
+        <br/><div class='row justify-content-between'>
+            <div class="col-4">
+                <input type="submit" name='button_update' class="form-control btn btn-primary" value="Update"/>
+            </div>
+            <div class="col-4">
+                {% if handover.status == 3 %}
+                <a role="button" class="form-control btn btn-secondary" href="{% url 'Handover:activate' handover.handoverid %}">Activate this handover</a>
+                {% else %}
+                <a role="button" class="form-control btn btn-success" href="{% url 'Handover:resolve' handover.handoverid %}">Resolve this handover</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-md-3">
+                <label for="handoverTower" class="col-form-label">Team*:</label>
+                <input class="form-control" disabled value="{{handover.tower}}" />
+                <small class='text-muted'>We are working actively to let you change the team as well</small>
+            </div>
+            <div class="col-md-3">
+                <label for="handoverSPOC" class="col-form-label">S.P.O.C.:</label>
+                <select class="form-control" name="spoc" id="HandoverSPOC">
+                    {% if handover.spoc %}
+                    <option value="{{handover.spoc.userid}}">{{handover.spoc.get_username}}</option>
+                    {% endif %}
+                    <option value=''>-----------</option>
+                    <!--option value="" selected>{handover.spoc}}</!--option -->
+                    {% for user in users %}
+                    <option value="{{ user.userid }}">{{ user.get_username }}</option>
+                    {% endfor %}
+                </select>
+                <small class="text-form text-muted">Who's knows best about the handover?</small>
+            </div>
+            <div class="col-md-3">
+                <label for="handoverPriority" class="col-form-label col-md-4">Priority</label>
+                <select class="form-control" name="handoverPriority" id="HandoverPriority" required>
+                    {% if handover.priority == 1 %}
+                    <option value="1" selected>High</option>
+                    <option value="2">Medium</option>
+                    <option value="3">Low</option>
+                    {% elif handover.priority == 2 %}
+                    <option value="1">High</option>
+                    <option value="2" selected>Medium</option>
+                    <option value="3">Low</option>
+                    {% elif handover.priority == 3 %}
+                    <option value="1">High</option>
+                    <option value="2">Medium</option>
+                    <option value="3" selected>Low</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="handoverTicket" class="col-form-label col-md-4">Ticket No</label>
+                <input type="number" class="form-control" name="ticketno" id="ticketno" min="10000" max="999999999999999" value="{{handover.ticketno}}"/>
+                <small class="text-form text-muted">Min: 5 digits | Max: 15 digits (for MS Cases)</small>
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-md">
+                <label for="handoverDesription">Description:</label>
+                <textarea maxlength="500" class="form-control" name="handoverDescription" id="HandoverDescription" rows="3">{{handover.description}}</textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="handoverDiscussions">Comments</label><br />
+            <textarea class="form-control col-md-6" rows="3" name="handoverdiscussion" id="HandoverDiscussion" maxlength="100"></textarea>
+            {% if discussion %}
+                {% for d in discussion %}
+                    <p class="text-muted">{{d.discussiontime}}: {{d.createdby}}: {{d.discussiontext}}</p>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <hr />
+        {% if message %}
+            <p>{{message}}</p>
+        {% endif %}
+        <div class='row justify-content-between'>
+            <div class="col-4">
+                <input type="submit" name='button_update' class="form-control btn btn-primary" value="Update"/>
+            </div>
+            <div class="col-4">
+                {% if handover.status == 3 %}
+                <a role="button" class="form-control btn btn-secondary" href="{% url 'Handover:activate' handover.handoverid %}">Activate this handover</a>
+                {% else %}
+                <a role="button" class="form-control btn btn-success" href="{% url 'Handover:resolve' handover.handoverid %}">Resolve this handover</a>
+                {% endif %}
+            </div>
+        </div>
+        <br />
+    </form>
+</div>
+{% endblock body %}
+{% block scripts %}
+<script>
+        // Example starter JavaScript for disabling form submissions if there are invalid fields
+        (function () {
+            'use strict';
+            window.addEventListener('load', function () {
+                // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                var forms = document.getElementsByClassName('needs-validation');
+                // Loop over them and prevent submission
+                var validation = Array.prototype.filter.call(forms, function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+</script>
+{% endblock scripts %}

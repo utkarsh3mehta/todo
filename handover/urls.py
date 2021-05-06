@@ -1,0 +1,43 @@
+from django.urls import path
+from . import views
+
+app_name = 'Handover'
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('maintenance', views.maintenance, name='maintenance'),
+    path('signinuser/', views.signin, name='signin'),
+    path('createuser/', views.createuser, name='createuser'),
+    path('checkuser/',views.checkuser, name='checkuser'),
+    path('showmyself/', views.showmyself, name='showmyself'),
+    path('approve_user/', views.approve_user, name='approve_user'),
+    path('approve_user_post/', views.approve_user_post, name='approve_user_post'),
+    path('decline_user_post/', views.decline_user_post, name='decline_user_post'),
+    path('updateuser/<int:user_id>', views.updateuser, name='updateuser'),
+    path('user_state/<int:state_int>', views.user_state, name='user_state'),
+    path('sendotp/', views.forgotpassword_send_otp, name='sendotp'),
+    path('forgotpassword/', views.forgotpassword_post_otp, name='forgotpassword'),
+    path('team/', views.team, name='team'),
+    path('createteam/', views.createteam, name='createteam'),
+    path('checkteam/', views.checkteam, name='checkteam'),
+    path('updateteam/', views.updateteam, name='updateteam'),
+    path('main/', views.main, name='main'),
+    path('basictraining', views.basictraining, name='basictraining'),
+    path('search', views.search, name='search'),
+    path('newcomment/<int:handover_id>',views.newcomment,name='newcomment'),
+    path('showHandoverModal',views.showHandoverModal, name='showHandoverModal'),
+    path('showHandoverModalAttachments', views.showHandoverModalAttachments, name='showHandoverModalAttachments'),    
+    path('attachment_modal', views.attachment_modal, name='attachment_modal'),
+    path('createhandover/', views.createhandover, name='createhandover'),
+    path('teammembers',views.teammembers, name='teammembers'),
+    path('teammembers_user',views.teammembers_user, name='teammembers_user'),
+    path('showhandover/<int:handover_id>',views.showhandover, name='showhandover'),
+    path('updatehandover/<int:handover_id>',views.updatehandover, name='updatehandover'),
+    path('activate/<int:handover_id>', views.activate, name='activate'),
+    path('resolve/<int:handover_id>', views.resolve, name='resolve'),
+    path('upload_attachment/<int:handover_id>', views.upload_attachment, name='upload_attachment'),
+    path('send_feedback/', views.send_feedback, name='send_feedback'),
+    path('logout', views.logout, name='logout'),
+    path('test/',views.test,name='test'),
+]  
+
+#path('showHandoverModalTimeline', views.showHandoverModalTimeline, name='showHandoverModalTimeline'),
