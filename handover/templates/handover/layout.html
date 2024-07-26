@@ -17,6 +17,9 @@
             width: 30px;
             height: 30px;
         }
+        input[type='search']::placeholder {
+            font-size: 10px;
+        }
     </style>
     {% block styles %}{% endblock styles %}
 </head>
@@ -31,8 +34,8 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <div class="navbar-nav">
+        <div class="collapse navbar-collapse justify-content-md-end" id="navbarSupportedContent">
+            <div class="navbar-nav align-items-md-center">
                 {% block navbar %}{% endblock navbar %}
             </div>
         </div>
