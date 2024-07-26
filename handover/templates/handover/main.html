@@ -1,4 +1,4 @@
-{% extends 'handover/layout.html' %}{% load static %}
+﻿{% extends 'handover/layout.html' %}{% load static %}
 {% block styles %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/2.9.3/introjs.min.css" />
 <style>
@@ -99,7 +99,8 @@ img {
                                                 <label for="handoverDesription">Description*</label>
                                                 <textarea class="form-control" name="handoverDescription" id="HandoverDescription" maxlength="500" rows="3" required></textarea>
                                                 {% if error_description %}<p class="text-form text-danger">{{error_description}}</p>{% endif %}
-                                                <div class="invalid-feedback">The description is for the next person. Make sure to be expressive and explanatory.</div>
+                                                <div class="invalid-feedback">The description is for the next person. Make sure to be explanatory.</div>
+                                                <small class="text-form text-muted">Longer descriptions are helpful.</small>
                                             </div>
                                         </div>
                                         <div class="form-group row">
