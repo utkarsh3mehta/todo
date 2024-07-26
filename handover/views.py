@@ -237,7 +237,7 @@ def createuser(request):
                 for t in team:
                     te = Team.objects.get(pk=t)
                     u.team.add(te)
-                    _to = ['utkarsh.mehta@lntinfotech.com']
+                    _to = ['utkarsh.mehta@enpointe.io']
                     _from = 'ild@hms.com'
                     _subject = u.useremail + ' wants to join ' + te.teamname
                     _link_approve = 'https://handoverms.westus.cloudapp.azure.com:8000/handover/approve_user/?approval=True&team='+str(te.teamid)+'&user='+str(u.userid)
@@ -361,7 +361,7 @@ def updateuser(request,user_id):
                         if new != '':
                             nt = Team.objects.get(pk=new)
                             u.team.add(nt)
-                            _to = ['utkarsh.mehta@lntinfotech.com']
+                            _to = ['utkarsh.mehta@enpointe.io']
                             _from = 'ild@hms.com'
                             _subject = u.get_username + ' wants to join ' + nt.teamname
                             _link_approve = 'https://handoverms.westus.cloudapp.azure.com:8000/handover/approve_user/?approval=True&team='+str(nt.teamid)+'&user='+str(u.userid)
