@@ -1,6 +1,6 @@
 {% extends 'handover/layout.html' %}
 {% block navbar %}
-<a class='nav-item nav-link' href='{% url "Handover:main" %}'>Home</a>
+<a class='nav-item nav-link mr-auto' href='{% url "Handover:main" %}'>Home</a>
 <form class="form-inline my-2 my-lg-0" action="{% url 'Handover:search' %}" method="GET">
     <input class="form-control mr-sm-2" type="search" placeholder="Description and comment." name="search_string" aria-label="Search">
     <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
@@ -8,7 +8,7 @@
 {% endblock navbar %}
 {% block body %}
 <div class="container-fluid">
-    <p>Searched for '{{search_string}}'</p>
+    <h1 class="mt-3">Showing results for <span class="text-capitalize">'{{search_string}}'</span></h1>
     <fieldset>
         {% if h_description %}
         <legend>Found in Description</legend>
