@@ -1,4 +1,4 @@
-﻿{% extends 'handover/layout.html' %}{% load static %}
+{% extends 'handover/layout.html' %}{% load static %}
 {% block styles %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/2.9.3/introjs.min.css" />
 <style>
@@ -30,6 +30,10 @@ img {
 {% endblock styles %}
 {% block navbar %}
 <a class='nav-item nav-link' href="{% url 'Handover:showmyself' %}?tab=handover">My Handovers {% if user.my_handover_unchecked %}<span class="badge badge-pill badge-light">{{user.my_handover_unchecked}}</span>{% endif %}</a>
+<form class="form-inline my-2 my-lg-0" action="{% url 'Handover:search' %}" method="GET">
+    <input class="form-control mr-sm-2" type="search" placeholder="Description and comment." name="search_string" aria-label="Search">
+    <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
+</form>
 {% if team %}<a class='nav-item nav-link's id="starttour" href="#">Take the tour?</a>{% endif %}
 <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -42,10 +46,6 @@ img {
       <a class="dropdown-item disabled" href="#">Redeem your points</a>
     </div>
 </li>
-<form class="form-inline my-2 my-lg-0" action="{% url 'Handover:search' %}" method="GET">
-    <input class="form-control mr-sm-2" type="search" placeholder="Description and comment." name="search_string" aria-label="Search">
-    <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
-</form>
 {% endblock navbar %}
 
 {% block body %}
